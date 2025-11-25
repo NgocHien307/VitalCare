@@ -22,6 +22,27 @@ jobs:
     name: Backend CI (Java ${{ matrix.java }})
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     strategy:
       matrix:
         java: [21]
@@ -40,6 +61,12 @@ jobs:
       - name: 🔧 Make Maven Wrapper executable
         run: chmod +x ./mvnw
 
+      - name: 🔄 Wait for services to be ready
+        run: |
+          echo "Waiting for MongoDB and Redis..."
+          sleep 5
+          echo "Services ready!"
+
       - name: 📦 Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -54,8 +81,11 @@ jobs:
           SPRING_PROFILES_ACTIVE: test
           JWT_SECRET: test-jwt-secret-key-for-ci-pipeline-minimum-256-bits-required
           MONGODB_URI: mongodb://localhost:27017/healthtracker_test
+          SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/healthtracker_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
 
       - name: 📊 Generate Test Coverage Report
         run: ./mvnw jacoco:report -B --file pom.xml
