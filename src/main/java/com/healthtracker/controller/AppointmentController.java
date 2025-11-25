@@ -4,7 +4,7 @@ import com.healthtracker.dto.request.AppointmentRequest;
 import com.healthtracker.dto.response.AppointmentResponse;
 import com.healthtracker.mapper.AppointmentMapper;
 import com.healthtracker.model.Appointment;
-import com.healthtracker.service.AppointmentService;
+import com.healthtracker.service.IAppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,14 +19,15 @@ import java.util.List;
 /**
  * Controller for appointments endpoints
  *
- * SECURITY: Returns DTOs instead of entities to prevent information leakage (userId NOT exposed)
+ * SECURITY: Returns DTOs instead of entities to prevent information leakage
+ * (userId NOT exposed)
  */
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
 public class AppointmentController {
 
-    private final AppointmentService appointmentService;
+    private final IAppointmentService appointmentService;
     private final AppointmentMapper appointmentMapper;
 
     /**
@@ -37,8 +38,7 @@ public class AppointmentController {
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<AppointmentResponse>> getAllAppointments(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Appointment> appointments = appointmentService.getAllAppointments(userId);
         List<AppointmentResponse> responses = appointmentMapper.toResponseList(appointments);
@@ -53,8 +53,7 @@ public class AppointmentController {
     @GetMapping("/upcoming")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<AppointmentResponse>> getUpcomingAppointments(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Appointment> appointments = appointmentService.getUpcomingAppointments(userId);
         List<AppointmentResponse> responses = appointmentMapper.toResponseList(appointments);
@@ -70,8 +69,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<AppointmentResponse> getAppointmentById(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Appointment appointment = appointmentService.getAppointmentById(id, userId);
         AppointmentResponse response = appointmentMapper.toResponse(appointment);
@@ -87,8 +85,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<AppointmentResponse> addAppointment(
             @Valid @RequestBody AppointmentRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Appointment appointment = appointmentService.addAppointment(userId, request);
         AppointmentResponse response = appointmentMapper.toResponse(appointment);
@@ -105,8 +102,7 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> updateAppointment(
             @PathVariable String id,
             @Valid @RequestBody AppointmentRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Appointment appointment = appointmentService.updateAppointment(id, userId, request);
         AppointmentResponse response = appointmentMapper.toResponse(appointment);
@@ -120,8 +116,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> deleteAppointment(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         appointmentService.deleteAppointment(id, userId);
         return ResponseEntity.noContent().build();

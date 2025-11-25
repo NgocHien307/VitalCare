@@ -4,7 +4,7 @@ import com.healthtracker.dto.request.MedicineRequest;
 import com.healthtracker.dto.response.MedicineResponse;
 import com.healthtracker.mapper.MedicineMapper;
 import com.healthtracker.model.Medicine;
-import com.healthtracker.service.MedicineService;
+import com.healthtracker.service.IMedicineService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,14 +19,15 @@ import java.util.List;
 /**
  * Controller for medicines endpoints
  *
- * SECURITY: Returns DTOs instead of entities to prevent information leakage (userId NOT exposed)
+ * SECURITY: Returns DTOs instead of entities to prevent information leakage
+ * (userId NOT exposed)
  */
 @RestController
 @RequestMapping("/api/medicines")
 @RequiredArgsConstructor
 public class MedicineController {
 
-    private final MedicineService medicineService;
+    private final IMedicineService medicineService;
     private final MedicineMapper medicineMapper;
 
     /**
@@ -37,8 +38,7 @@ public class MedicineController {
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<MedicineResponse>> getAllMedicines(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Medicine> medicines = medicineService.getAllMedicines(userId);
         List<MedicineResponse> responses = medicineMapper.toResponseList(medicines);
@@ -53,8 +53,7 @@ public class MedicineController {
     @GetMapping("/active")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<MedicineResponse>> getActiveMedicines(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Medicine> medicines = medicineService.getActiveMedicines(userId);
         List<MedicineResponse> responses = medicineMapper.toResponseList(medicines);
@@ -70,8 +69,7 @@ public class MedicineController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<MedicineResponse> getMedicineById(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Medicine medicine = medicineService.getMedicineById(id, userId);
         MedicineResponse response = medicineMapper.toResponse(medicine);
@@ -87,8 +85,7 @@ public class MedicineController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<MedicineResponse> addMedicine(
             @Valid @RequestBody MedicineRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Medicine medicine = medicineService.addMedicine(userId, request);
         MedicineResponse response = medicineMapper.toResponse(medicine);
@@ -105,8 +102,7 @@ public class MedicineController {
     public ResponseEntity<MedicineResponse> updateMedicine(
             @PathVariable String id,
             @Valid @RequestBody MedicineRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Medicine medicine = medicineService.updateMedicine(id, userId, request);
         MedicineResponse response = medicineMapper.toResponse(medicine);
@@ -122,8 +118,7 @@ public class MedicineController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<MedicineResponse> deactivateMedicine(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Medicine medicine = medicineService.deactivateMedicine(id, userId);
         MedicineResponse response = medicineMapper.toResponse(medicine);
@@ -137,8 +132,7 @@ public class MedicineController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> deleteMedicine(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         medicineService.deleteMedicine(id, userId);
         return ResponseEntity.noContent().build();

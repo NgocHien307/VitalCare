@@ -1,0 +1,269 @@
+# Health Tracker DSS - CI/CD Pipeline
+# Runs on every push and pull request to main branch
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "18"
+  MONGODB_VERSION: "7.0"
+
+jobs:
+  # ============================================
+  # Backend CI Job
+  # ============================================
+  backend:
+    name: Backend CI (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java: [21]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: "temurin"
+          cache: maven
+
+      - name: 📦 Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: 🔍 Run Tests
+        run: ./mvnw test -B --file pom.xml
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          JWT_SECRET: test-jwt-secret-key-for-ci-pipeline-minimum-256-bits-required
+          MONGODB_URI: mongodb://localhost:27017/healthtracker_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: 📊 Generate Test Coverage Report
+        run: ./mvnw jacoco:report -B --file pom.xml
+        continue-on-error: true
+
+      - name: 📦 Build Package
+        run: ./mvnw clean package -DskipTests -B --file pom.xml
+
+      - name: 📤 Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-tracker-dss-jar
+          path: target/*.jar
+          retention-days: 7
+
+      - name: 📤 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: target/surefire-reports/
+          retention-days: 7
+
+      - name: 📤 Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: coverage-report
+          path: target/site/jacoco/
+          retention-days: 7
+
+  # ============================================
+  # Frontend CI Job
+  # ============================================
+  frontend:
+    name: Frontend CI (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    strategy:
+      matrix:
+        node: [18, 20]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 Run Linting
+        run: npm run lint --if-present
+        continue-on-error: true
+
+      - name: 🧪 Run Tests
+        run: npm test --if-present
+        continue-on-error: true
+
+      - name: 🏗️ Build
+        run: npm run build
+
+      - name: 📤 Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-node-${{ matrix.node }}
+          path: frontend/dist/
+          retention-days: 7
+
+  # ============================================
+  # Integration Tests Job
+  # ============================================
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend]
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: 🔄 Wait for MongoDB
+        run: |
+          until mongosh --eval "db.runCommand({ ping: 1 })" --quiet; do
+            echo "Waiting for MongoDB..."
+            sleep 2
+          done
+          echo "MongoDB is ready!"
+
+      - name: 🔄 Wait for Redis
+        run: |
+          until redis-cli ping; do
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+          echo "Redis is ready!"
+
+      - name: 🧪 Run Integration Tests
+        run: ./mvnw verify -B --file pom.xml
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          JWT_SECRET: test-jwt-secret-key-for-ci-pipeline-minimum-256-bits-required
+          MONGODB_URI: mongodb://localhost:27017/healthtracker_integration_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/healthtracker_integration_test
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+
+      - name: 📤 Upload Integration Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: target/failsafe-reports/
+          retention-days: 7
+
+  # ============================================
+  # Security Scan Job
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [backend]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: 🔒 OWASP Dependency Check
+        run: ./mvnw org.owasp:dependency-check-maven:check -B --file pom.xml
+        continue-on-error: true
+
+      - name: 📤 Upload Security Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report
+          path: target/dependency-check-report.html
+          retention-days: 30
+
+  # ============================================
+  # Build Status Summary
+  # ============================================
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, integration]
+    if: always()
+
+    steps:
+      - name: 📊 Check Build Status
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration | ${{ needs.integration.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.backend.result }}" == "success" && "${{ needs.frontend.result }}" == "success" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All critical jobs passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Some jobs failed. Please check the logs.**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

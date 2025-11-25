@@ -14,57 +14,62 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Service for health metrics operations
+ * Implementation of health metrics operations
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class HealthMetricService {
-    
+public class HealthMetricService implements IHealthMetricService {
+
     private final HealthMetricRepository healthMetricRepository;
-    
+
     /**
      * Get all metrics for a user
      */
+    @Override
     public List<HealthMetric> getAllMetrics(String userId) {
         return healthMetricRepository.findByUserId(userId);
     }
-    
+
     /**
      * Get metrics by type for a user
      */
+    @Override
     public List<HealthMetric> getMetricsByType(String userId, MetricType metricType) {
         return healthMetricRepository.findByUserIdAndMetricType(userId, metricType);
     }
-    
+
     /**
      * Get recent metrics for a user
      */
+    @Override
     public List<HealthMetric> getRecentMetrics(String userId, LocalDateTime since) {
         return healthMetricRepository.findByUserIdAndMeasuredAtAfter(userId, since);
     }
-    
+
     /**
      * Get a specific metric by ID
      */
+    @Override
     public HealthMetric getMetricById(String id, String userId) {
         HealthMetric metric = healthMetricRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("HealthMetric", "id", id));
-        
+
         // Verify ownership
         if (!metric.getUserId().equals(userId)) {
             throw new BadRequestException("You don't have permission to access this metric");
         }
-        
+
         return metric;
     }
-    
+
     /**
      * Add a new health metric
      */
+    @Override
     public HealthMetric addMetric(String userId, HealthMetricRequest request) {
         log.info("Adding new metric for user: {}, type: {}", userId, request.getMetricType());
-        
+
         HealthMetric metric = HealthMetric.builder()
                 .userId(userId)
                 .metricType(request.getMetricType())
@@ -75,21 +80,22 @@ public class HealthMetricService {
                 .measuredAt(request.getMeasuredAt())
                 .notes(request.getNotes())
                 .build();
-        
+
         // Analyze and set status
         analyzeMetric(metric);
-        
+
         return healthMetricRepository.save(metric);
     }
-    
+
     /**
      * Update an existing metric
      */
+    @Override
     public HealthMetric updateMetric(String id, String userId, HealthMetricRequest request) {
         HealthMetric metric = getMetricById(id, userId);
-        
+
         log.info("Updating metric: {} for user: {}", id, userId);
-        
+
         metric.setMetricType(request.getMetricType());
         metric.setValue(request.getValue());
         metric.setSystolic(request.getSystolic());
@@ -97,22 +103,23 @@ public class HealthMetricService {
         metric.setUnit(request.getUnit());
         metric.setMeasuredAt(request.getMeasuredAt());
         metric.setNotes(request.getNotes());
-        
+
         // Re-analyze
         analyzeMetric(metric);
-        
+
         return healthMetricRepository.save(metric);
     }
-    
+
     /**
      * Delete a metric
      */
+    @Override
     public void deleteMetric(String id, String userId) {
         HealthMetric metric = getMetricById(id, userId);
         log.info("Deleting metric: {} for user: {}", id, userId);
         healthMetricRepository.delete(metric);
     }
-    
+
     /**
      * Analyze metric and set status
      */
@@ -134,16 +141,16 @@ public class HealthMetricService {
                 metric.setStatus("NORMAL");
         }
     }
-    
+
     private void analyzeBloodPressure(HealthMetric metric) {
         if (metric.getSystolic() == null || metric.getDiastolic() == null) {
             metric.setStatus("NORMAL");
             return;
         }
-        
+
         double systolic = metric.getSystolic();
         double diastolic = metric.getDiastolic();
-        
+
         if (systolic >= 180 || diastolic >= 120) {
             metric.setStatus("CRITICAL");
             metric.setAnalysisNote("Huyết áp rất cao - Cần gặp bác sĩ ngay");
@@ -158,15 +165,15 @@ public class HealthMetricService {
             metric.setAnalysisNote("Huyết áp bình thường");
         }
     }
-    
+
     private void analyzeBloodSugar(HealthMetric metric) {
         if (metric.getValue() == null) {
             metric.setStatus("NORMAL");
             return;
         }
-        
+
         double value = metric.getValue();
-        
+
         if (value >= 200) {
             metric.setStatus("CRITICAL");
             metric.setAnalysisNote("Đường huyết rất cao - Cần gặp bác sĩ ngay");
@@ -181,15 +188,15 @@ public class HealthMetricService {
             metric.setAnalysisNote("Đường huyết bình thường");
         }
     }
-    
+
     private void analyzeHeartRate(HealthMetric metric) {
         if (metric.getValue() == null) {
             metric.setStatus("NORMAL");
             return;
         }
-        
+
         double value = metric.getValue();
-        
+
         if (value > 120 || value < 40) {
             metric.setStatus("CRITICAL");
             metric.setAnalysisNote("Nhịp tim bất thường - Cần gặp bác sĩ");
@@ -201,15 +208,15 @@ public class HealthMetricService {
             metric.setAnalysisNote("Nhịp tim bình thường");
         }
     }
-    
+
     private void analyzeBodyTemperature(HealthMetric metric) {
         if (metric.getValue() == null) {
             metric.setStatus("NORMAL");
             return;
         }
-        
+
         double value = metric.getValue();
-        
+
         if (value >= 39.0) {
             metric.setStatus("CRITICAL");
             metric.setAnalysisNote("Sốt cao - Cần gặp bác sĩ");
@@ -225,4 +232,3 @@ public class HealthMetricService {
         }
     }
 }
-

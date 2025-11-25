@@ -15,32 +15,36 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AppointmentService {
-    
+public class AppointmentService implements IAppointmentService {
+
     private final AppointmentRepository appointmentRepository;
-    
+
+    @Override
     public List<Appointment> getAllAppointments(String userId) {
         return appointmentRepository.findByUserIdOrderByAppointmentDateAsc(userId);
     }
-    
+
+    @Override
     public List<Appointment> getUpcomingAppointments(String userId) {
         return appointmentRepository.findByUserIdAndAppointmentDateAfter(userId, LocalDateTime.now());
     }
-    
+
+    @Override
     public Appointment getAppointmentById(String id, String userId) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", id));
-        
+
         if (!appointment.getUserId().equals(userId)) {
             throw new BadRequestException("You don't have permission to access this appointment");
         }
-        
+
         return appointment;
     }
-    
+
+    @Override
     public Appointment addAppointment(String userId, AppointmentRequest request) {
         log.info("Adding new appointment for user: {}", userId);
-        
+
         Appointment appointment = Appointment.builder()
                 .userId(userId)
                 .doctorName(request.getDoctorName())
@@ -52,15 +56,16 @@ public class AppointmentService {
                 .reason(request.getReason())
                 .notes(request.getNotes())
                 .build();
-        
+
         return appointmentRepository.save(appointment);
     }
-    
+
+    @Override
     public Appointment updateAppointment(String id, String userId, AppointmentRequest request) {
         Appointment appointment = getAppointmentById(id, userId);
-        
+
         log.info("Updating appointment: {} for user: {}", id, userId);
-        
+
         appointment.setDoctorName(request.getDoctorName());
         appointment.setSpecialty(request.getSpecialty());
         appointment.setHospital(request.getHospital());
@@ -69,14 +74,14 @@ public class AppointmentService {
         appointment.setStatus(request.getStatus());
         appointment.setReason(request.getReason());
         appointment.setNotes(request.getNotes());
-        
+
         return appointmentRepository.save(appointment);
     }
-    
+
+    @Override
     public void deleteAppointment(String id, String userId) {
         Appointment appointment = getAppointmentById(id, userId);
         log.info("Deleting appointment: {} for user: {}", id, userId);
         appointmentRepository.delete(appointment);
     }
 }
-

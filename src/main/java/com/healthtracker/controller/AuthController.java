@@ -4,7 +4,7 @@ import com.healthtracker.dto.request.LoginRequest;
 import com.healthtracker.dto.request.RegisterRequest;
 import com.healthtracker.dto.response.AuthResponse;
 import com.healthtracker.dto.response.UserResponse;
-import com.healthtracker.service.AuthService;
+import com.healthtracker.service.IAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    
-    private final AuthService authService;
-    
+
+    private final IAuthService authService;
+
     /**
      * Register a new user
      */
@@ -32,7 +32,7 @@ public class AuthController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     /**
      * Login user
      */
@@ -41,19 +41,18 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Get current authenticated user
      */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         UserResponse response = authService.getCurrentUser(email);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Refresh token (optional - can be implemented later)
      */
@@ -63,7 +62,7 @@ public class AuthController {
         // For now, just return current user info
         String email = authentication.getName();
         UserResponse user = authService.getCurrentUser(email);
-        
+
         // Generate new token
         AuthResponse response = AuthResponse.builder()
                 .token("refreshed-token") // TODO: implement actual refresh logic
@@ -71,8 +70,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .build();
-        
+
         return ResponseEntity.ok(response);
     }
 }
-

@@ -1,0 +1,24 @@
+# Health Tracker DSS - Code Owners
+# These owners will be requested for review when someone opens a pull request
+
+# Default owners for everything in the repo
+* @NgocHien307
+
+# Backend (Java/Spring Boot)
+/src/ @NgocHien307
+/pom.xml @NgocHien307
+
+# Frontend (React/Vite)
+/frontend/ @NgocHien307
+
+# CI/CD and DevOps
+/.github/ @NgocHien307
+
+# Documentation
+/markdown/ @NgocHien307
+*.md @NgocHien307
+
+# Configuration files
+*.properties @NgocHien307
+*.yml @NgocHien307
+*.yaml @NgocHien307

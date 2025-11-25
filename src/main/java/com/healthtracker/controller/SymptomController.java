@@ -4,7 +4,7 @@ import com.healthtracker.dto.request.SymptomRequest;
 import com.healthtracker.dto.response.SymptomResponse;
 import com.healthtracker.mapper.SymptomMapper;
 import com.healthtracker.model.Symptom;
-import com.healthtracker.service.SymptomService;
+import com.healthtracker.service.ISymptomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,14 +19,15 @@ import java.util.List;
 /**
  * Controller for symptoms endpoints
  *
- * SECURITY: Returns DTOs instead of entities to prevent information leakage (userId NOT exposed)
+ * SECURITY: Returns DTOs instead of entities to prevent information leakage
+ * (userId NOT exposed)
  */
 @RestController
 @RequestMapping("/api/symptoms")
 @RequiredArgsConstructor
 public class SymptomController {
 
-    private final SymptomService symptomService;
+    private final ISymptomService symptomService;
     private final SymptomMapper symptomMapper;
 
     /**
@@ -37,8 +38,7 @@ public class SymptomController {
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<SymptomResponse>> getAllSymptoms(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Symptom> symptoms = symptomService.getAllSymptoms(userId);
         List<SymptomResponse> responses = symptomMapper.toResponseList(symptoms);
@@ -53,8 +53,7 @@ public class SymptomController {
     @GetMapping("/active")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<SymptomResponse>> getActiveSymptoms(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         List<Symptom> symptoms = symptomService.getActiveSymptoms(userId);
         List<SymptomResponse> responses = symptomMapper.toResponseList(symptoms);
@@ -70,8 +69,7 @@ public class SymptomController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<SymptomResponse> getSymptomById(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Symptom symptom = symptomService.getSymptomById(id, userId);
         SymptomResponse response = symptomMapper.toResponse(symptom);
@@ -87,8 +85,7 @@ public class SymptomController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<SymptomResponse> addSymptom(
             @Valid @RequestBody SymptomRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Symptom symptom = symptomService.addSymptom(userId, request);
         SymptomResponse response = symptomMapper.toResponse(symptom);
@@ -105,8 +102,7 @@ public class SymptomController {
     public ResponseEntity<SymptomResponse> updateSymptom(
             @PathVariable String id,
             @Valid @RequestBody SymptomRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Symptom symptom = symptomService.updateSymptom(id, userId, request);
         SymptomResponse response = symptomMapper.toResponse(symptom);
@@ -122,8 +118,7 @@ public class SymptomController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<SymptomResponse> endSymptom(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Symptom symptom = symptomService.endSymptom(id, userId);
         SymptomResponse response = symptomMapper.toResponse(symptom);
@@ -137,8 +132,7 @@ public class SymptomController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> deleteSymptom(
             @PathVariable String id,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         symptomService.deleteSymptom(id, userId);
         return ResponseEntity.noContent().build();
