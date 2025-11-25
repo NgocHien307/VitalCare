@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import Button from '../components/Button';
@@ -87,9 +87,7 @@ const Login = () => {
         }
 
         // Navigate to dashboard
-        if (onNavigate) {
-          onNavigate('/dashboard');
-        }
+        navigate('/dashboard');
       } else {
         setLoginError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
       }
@@ -206,7 +204,7 @@ const Login = () => {
               />
               <button
                 type="button"
-                onClick={() => onNavigate && onNavigate('/forgot-password')}
+                onClick={() => navigate('/forgot-password')}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
               >
                 Quên mật khẩu?
@@ -288,7 +286,7 @@ const Login = () => {
         <p className="text-center text-sm text-gray-600">
           Chưa có tài khoản?{' '}
           <button
-            onClick={() => onNavigate && onNavigate('/register')}
+            onClick={() => navigate('/register')}
             className="text-primary-600 hover:text-primary-700 font-semibold transition-colors"
           >
             Đăng ký ngay

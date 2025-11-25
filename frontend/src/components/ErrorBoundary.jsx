@@ -23,7 +23,7 @@ class ErrorBoundary extends React.Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(_error) {
     // Update state so the next render will show the fallback UI
     return { hasError: true };
   }
@@ -141,11 +141,13 @@ class ErrorBoundary extends React.Component {
  * const SafeComponent = withErrorBoundary(MyComponent);
  */
 export const withErrorBoundary = (Component) => {
-  return (props) => (
+  const WrappedComponent = (props) => (
     <ErrorBoundary>
       <Component {...props} />
     </ErrorBoundary>
   );
+  WrappedComponent.displayName = `WithErrorBoundary(${Component.displayName || Component.name || 'Component'})`;
+  return WrappedComponent;
 };
 
 export default ErrorBoundary;

@@ -37,6 +37,9 @@ jobs:
           distribution: "temurin"
           cache: maven
 
+      - name: 🔧 Make Maven Wrapper executable
+        run: chmod +x ./mvnw
+
       - name: 📦 Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -172,6 +175,9 @@ jobs:
           distribution: "temurin"
           cache: maven
 
+      - name: 🔧 Make Maven Wrapper executable
+        run: chmod +x ./mvnw
+
       - name: 🔄 Wait for MongoDB
         run: |
           until mongosh --eval "db.runCommand({ ping: 1 })" --quiet; do
@@ -226,6 +232,9 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: maven
+
+      - name: 🔧 Make Maven Wrapper executable
+        run: chmod +x ./mvnw
 
       - name: 🔒 OWASP Dependency Check
         run: ./mvnw org.owasp:dependency-check-maven:check -B --file pom.xml

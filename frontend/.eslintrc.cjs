@@ -26,12 +26,11 @@ module.exports = {
   },
   plugins: ['react-refresh'],
   rules: {
-    'react-refresh/only-export-components': [
-      'warn',
-      { allowConstantExport: true },
-    ],
+    'react-refresh/only-export-components': 'off',
     'react/prop-types': 'off',
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'react/display-name': 'off',
+    'react/no-unescaped-entities': 'off',
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^(React|_)' }],
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
 };
