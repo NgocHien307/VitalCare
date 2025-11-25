@@ -1,6 +1,8 @@
 package com.healthtracker.controller;
 
 import com.healthtracker.dto.request.HealthMetricRequest;
+import com.healthtracker.dto.response.HealthMetricResponse;
+import com.healthtracker.mapper.HealthMetricMapper;
 import com.healthtracker.model.HealthMetric;
 import com.healthtracker.model.MetricType;
 import com.healthtracker.service.HealthMetricService;
@@ -19,98 +21,119 @@ import java.util.List;
 
 /**
  * Controller for health metrics endpoints
+ *
+ * SECURITY: Returns DTOs instead of entities to prevent information leakage (userId NOT exposed)
  */
 @RestController
 @RequestMapping("/api/metrics")
 @RequiredArgsConstructor
 public class HealthMetricController {
-    
+
     private final HealthMetricService healthMetricService;
-    
+    private final HealthMetricMapper healthMetricMapper;
+
     /**
      * Get all metrics for authenticated user
+     *
+     * @return List of HealthMetricResponse DTOs (userId NOT exposed)
      */
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<HealthMetric>> getAllMetrics(
+    public ResponseEntity<List<HealthMetricResponse>> getAllMetrics(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername(); // Using email as userId
         List<HealthMetric> metrics = healthMetricService.getAllMetrics(userId);
-        return ResponseEntity.ok(metrics);
+        List<HealthMetricResponse> responses = healthMetricMapper.toResponseList(metrics);
+        return ResponseEntity.ok(responses);
     }
-    
+
     /**
      * Get metrics by type
+     *
+     * @return List of HealthMetricResponse DTOs (userId NOT exposed)
      */
     @GetMapping("/type/{type}")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<HealthMetric>> getMetricsByType(
+    public ResponseEntity<List<HealthMetricResponse>> getMetricsByType(
             @PathVariable MetricType type,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
         List<HealthMetric> metrics = healthMetricService.getMetricsByType(userId, type);
-        return ResponseEntity.ok(metrics);
+        List<HealthMetricResponse> responses = healthMetricMapper.toResponseList(metrics);
+        return ResponseEntity.ok(responses);
     }
-    
+
     /**
      * Get recent metrics
+     *
+     * @return List of HealthMetricResponse DTOs (userId NOT exposed)
      */
     @GetMapping("/recent")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<HealthMetric>> getRecentMetrics(
+    public ResponseEntity<List<HealthMetricResponse>> getRecentMetrics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
         List<HealthMetric> metrics = healthMetricService.getRecentMetrics(userId, since);
-        return ResponseEntity.ok(metrics);
+        List<HealthMetricResponse> responses = healthMetricMapper.toResponseList(metrics);
+        return ResponseEntity.ok(responses);
     }
-    
+
     /**
      * Get metric by ID
+     *
+     * @return HealthMetricResponse DTO (userId NOT exposed)
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<HealthMetric> getMetricById(
+    public ResponseEntity<HealthMetricResponse> getMetricById(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
         HealthMetric metric = healthMetricService.getMetricById(id, userId);
-        return ResponseEntity.ok(metric);
+        HealthMetricResponse response = healthMetricMapper.toResponse(metric);
+        return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Add new metric
+     *
+     * @return HealthMetricResponse DTO (userId NOT exposed)
      */
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<HealthMetric> addMetric(
+    public ResponseEntity<HealthMetricResponse> addMetric(
             @Valid @RequestBody HealthMetricRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
         HealthMetric metric = healthMetricService.addMetric(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(metric);
+        HealthMetricResponse response = healthMetricMapper.toResponse(metric);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     /**
      * Update metric
+     *
+     * @return HealthMetricResponse DTO (userId NOT exposed)
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<HealthMetric> updateMetric(
+    public ResponseEntity<HealthMetricResponse> updateMetric(
             @PathVariable String id,
             @Valid @RequestBody HealthMetricRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
         HealthMetric metric = healthMetricService.updateMetric(id, userId, request);
-        return ResponseEntity.ok(metric);
+        HealthMetricResponse response = healthMetricMapper.toResponse(metric);
+        return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Delete metric
      */
@@ -125,4 +148,3 @@ public class HealthMetricController {
         return ResponseEntity.noContent().build();
     }
 }
-

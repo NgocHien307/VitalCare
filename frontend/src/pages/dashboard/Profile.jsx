@@ -19,12 +19,14 @@ import Button from '../../components/Button';
 import Input from '../../components/Input';
 import FormGroup from '../../components/FormGroup';
 import Select from '../../components/Select';
+import { useToast } from '../../contexts/ToastContext';
 import Textarea from '../../components/Textarea';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Alert from '../../components/Alert';
 import { authAPI } from '../../utils/api';
 
 const Profile = () => {
+  const { error: showError } = useToast();
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -192,7 +194,7 @@ const Profile = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Failed to update personal info:', error);
-      alert('Không thể cập nhật thông tin. Vui lòng thử lại.');
+      showError('Không thể cập nhật thông tin. Vui lòng thử lại.');
     } finally {
       setSaveLoading(false);
     }
@@ -213,7 +215,7 @@ const Profile = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Failed to update health profile:', error);
-      alert('Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.');
+      showError('Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.');
     } finally {
       setSaveLoading(false);
     }
@@ -235,7 +237,7 @@ const Profile = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Failed to change password:', error);
-      alert('Không thể đổi mật khẩu. Vui lòng thử lại.');
+      showError('Không thể đổi mật khẩu. Vui lòng thử lại.');
     } finally {
       setSaveLoading(false);
     }

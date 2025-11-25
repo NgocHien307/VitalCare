@@ -191,74 +191,101 @@ export const authAPI = {
 
 /**
  * Health Metrics API
+ * Backend: HealthMetricController.java
+ * Returns: HealthMetricResponse DTOs (userId NOT exposed)
  */
 export const healthMetricsAPI = {
   // Get all metrics for current user
+  // Backend: GET /api/metrics
   getAll: async () => {
-    return api.get('/health-metrics');
+    return api.get('/metrics');
   },
 
   // Get metric by ID
+  // Backend: GET /api/metrics/{id}
   getById: async (id) => {
-    return api.get(`/health-metrics/${id}`);
+    return api.get(`/metrics/${id}`);
+  },
+
+  // Get metrics by type
+  // Backend: GET /api/metrics/type/{type}
+  // Types: BLOOD_PRESSURE, BLOOD_SUGAR, BMI, HEART_RATE, WEIGHT, TEMPERATURE
+  getByType: async (type) => {
+    return api.get(`/metrics/type/${type}`);
+  },
+
+  // Get recent metrics (since specific date)
+  // Backend: GET /api/metrics/recent?since={ISO-date}
+  getRecent: async (since) => {
+    const params = new URLSearchParams({
+      since: since.toISOString(),
+    });
+    return api.get(`/metrics/recent?${params}`);
   },
 
   // Create new metric
+  // Backend: POST /api/metrics
   create: async (metricData) => {
-    return api.post('/health-metrics', metricData);
+    return api.post('/metrics', metricData);
   },
 
   // Update metric
+  // Backend: PUT /api/metrics/{id}
   update: async (id, metricData) => {
-    return api.put(`/health-metrics/${id}`, metricData);
+    return api.put(`/metrics/${id}`, metricData);
   },
 
   // Delete metric
+  // Backend: DELETE /api/metrics/{id}
   delete: async (id) => {
-    return api.delete(`/health-metrics/${id}`);
-  },
-
-  // Get metrics by type and date range
-  getByTypeAndDateRange: async (type, startDate, endDate) => {
-    const params = new URLSearchParams({
-      type,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-    return api.get(`/health-metrics/search?${params}`);
+    return api.delete(`/metrics/${id}`);
   },
 };
 
 /**
  * Appointments API
+ * Backend: AppointmentController.java
+ * Returns: AppointmentResponse DTOs (userId NOT exposed)
  */
 export const appointmentsAPI = {
-  // Get all appointments
+  // Get all appointments for current user
+  // Backend: GET /api/appointments
   getAll: async () => {
     return api.get('/appointments');
   },
 
+  // Get upcoming appointments only
+  // Backend: GET /api/appointments/upcoming
+  getUpcoming: async () => {
+    return api.get('/appointments/upcoming');
+  },
+
   // Get appointment by ID
+  // Backend: GET /api/appointments/{id}
   getById: async (id) => {
     return api.get(`/appointments/${id}`);
   },
 
   // Create new appointment
+  // Backend: POST /api/appointments
   create: async (appointmentData) => {
     return api.post('/appointments', appointmentData);
   },
 
   // Update appointment
+  // Backend: PUT /api/appointments/{id}
   update: async (id, appointmentData) => {
     return api.put(`/appointments/${id}`, appointmentData);
   },
 
-  // Cancel appointment
+  // Cancel appointment (soft delete)
+  // Backend: PATCH /api/appointments/{id}/cancel
   cancel: async (id) => {
     return api.patch(`/appointments/${id}/cancel`);
   },
 
   // Delete appointment
+  // Backend: DELETE /api/appointments/{id}
   delete: async (id) => {
     return api.delete(`/appointments/${id}`);
   },
@@ -266,34 +293,48 @@ export const appointmentsAPI = {
 
 /**
  * Medicines API
+ * Backend: MedicineController.java
+ * Returns: MedicineResponse DTOs (userId NOT exposed)
  */
 export const medicinesAPI = {
-  // Get all medicines
+  // Get all medicines for current user
+  // Backend: GET /api/medicines
   getAll: async () => {
     return api.get('/medicines');
   },
 
+  // Get active medicines only (endDate is null or in future)
+  // Backend: GET /api/medicines/active
+  getActive: async () => {
+    return api.get('/medicines/active');
+  },
+
   // Get medicine by ID
+  // Backend: GET /api/medicines/{id}
   getById: async (id) => {
     return api.get(`/medicines/${id}`);
   },
 
   // Create new medicine
+  // Backend: POST /api/medicines
   create: async (medicineData) => {
     return api.post('/medicines', medicineData);
   },
 
   // Update medicine
+  // Backend: PUT /api/medicines/{id}
   update: async (id, medicineData) => {
     return api.put(`/medicines/${id}`, medicineData);
   },
 
   // Delete medicine
+  // Backend: DELETE /api/medicines/{id}
   delete: async (id) => {
     return api.delete(`/medicines/${id}`);
   },
 
   // Log medicine intake
+  // Backend: POST /api/medicines/{id}/log (NOT IMPLEMENTED YET)
   logIntake: async (medicineId) => {
     return api.post(`/medicines/${medicineId}/log`);
   },
@@ -301,40 +342,103 @@ export const medicinesAPI = {
 
 /**
  * Symptoms API
+ * Backend: SymptomController.java
+ * Returns: SymptomResponse DTOs (userId NOT exposed)
  */
 export const symptomsAPI = {
-  // Analyze symptoms
-  analyze: async (symptoms) => {
-    return api.post('/symptoms/analyze', { symptoms });
+  // Get all symptoms for current user
+  // Backend: GET /api/symptoms
+  getAll: async () => {
+    return api.get('/symptoms');
   },
 
-  // Get symptom history
-  getHistory: async () => {
-    return api.get('/symptoms/history');
+  // Get active symptoms only (endDate is null)
+  // Backend: GET /api/symptoms/active
+  getActive: async () => {
+    return api.get('/symptoms/active');
+  },
+
+  // Get symptom by ID
+  // Backend: GET /api/symptoms/{id}
+  getById: async (id) => {
+    return api.get(`/symptoms/${id}`);
+  },
+
+  // Create new symptom
+  // Backend: POST /api/symptoms
+  create: async (symptomData) => {
+    return api.post('/symptoms', symptomData);
+  },
+
+  // Update symptom
+  // Backend: PUT /api/symptoms/{id}
+  update: async (id, symptomData) => {
+    return api.put(`/symptoms/${id}`, symptomData);
+  },
+
+  // Mark symptom as ended (set endDate to now)
+  // Backend: PUT /api/symptoms/{id}/end
+  markAsEnded: async (id) => {
+    return api.put(`/symptoms/${id}/end`);
+  },
+
+  // Delete symptom
+  // Backend: DELETE /api/symptoms/{id}
+  delete: async (id) => {
+    return api.delete(`/symptoms/${id}`);
   },
 };
 
 /**
  * DSS (Decision Support System) API
+ * Backend: DSSController.java
+ * CORE: Symptom analysis and risk prediction algorithms
  */
 export const dssAPI = {
-  // Get health insights
-  getInsights: async () => {
-    return api.get('/dss/insights');
+  // Analyze active symptoms and predict possible conditions
+  // Backend: POST /api/dss/analyze-symptoms
+  // This is the CORE DSS algorithm!
+  analyzeSymptoms: async () => {
+    return api.post('/dss/analyze-symptoms');
   },
 
-  // Get health predictions
-  getPredictions: async () => {
-    return api.get('/dss/predictions');
+  // Predict health risks (cardiovascular, diabetes, etc.)
+  // Backend: POST /api/dss/predict-risks
+  predictRisks: async () => {
+    return api.post('/dss/predict-risks');
   },
 
-  // Generate health report
-  generateReport: async (startDate, endDate) => {
-    const params = new URLSearchParams({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-    return api.get(`/dss/report?${params}`);
+  // Get health insights for current user
+  // Backend: GET /api/dss/insights?unreadOnly={boolean}
+  getInsights: async (unreadOnly = false) => {
+    const params = new URLSearchParams({ unreadOnly });
+    return api.get(`/dss/insights?${params}`);
+  },
+
+  // Get health predictions for current user
+  // Backend: GET /api/dss/predictions?type={type}
+  // Types: CARDIOVASCULAR, DIABETES, HYPERTENSION, etc.
+  getPredictions: async (type = null) => {
+    const params = type ? new URLSearchParams({ type }) : '';
+    return api.get(`/dss/predictions${params ? '?' + params : ''}`);
+  },
+
+  // Mark insight as read
+  // Backend: PATCH /api/dss/insights/{id}/read
+  markInsightAsRead: async (insightId) => {
+    return api.patch(`/dss/insights/${insightId}/read`);
+  },
+
+  // Delete insight
+  // Backend: DELETE /api/dss/insights/{id}
+  deleteInsight: async (insightId) => {
+    return api.delete(`/dss/insights/${insightId}`);
+  },
+
+  // Delete prediction
+  // Backend: DELETE /api/dss/predictions/{id}
+  deletePrediction: async (predictionId) => {
+    return api.delete(`/dss/predictions/${predictionId}`);
   },
 };
 

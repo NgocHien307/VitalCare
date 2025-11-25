@@ -10,8 +10,10 @@ import Modal from '../../components/Modal';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import HealthStatusBadge from '../../components/HealthStatusBadge';
 import { medicinesAPI } from '../../utils/api';
+import { useToast } from '../../contexts/ToastContext';
 
 const Medications = () => {
+  const { success, error: showError } = useToast();
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -194,7 +196,7 @@ const Medications = () => {
       handleCloseModal();
     } catch (error) {
       console.error('Failed to save medication:', error);
-      alert('Không thể lưu thuốc. Vui lòng thử lại.');
+      showError('Không thể lưu thuốc. Vui lòng thử lại.');
     } finally {
       setSubmitLoading(false);
     }
@@ -208,7 +210,7 @@ const Medications = () => {
       setMedications((prev) => prev.filter((med) => med.id !== id));
     } catch (error) {
       console.error('Failed to delete medication:', error);
-      alert('Không thể xóa thuốc. Vui lòng thử lại.');
+      showError('Không thể xóa thuốc. Vui lòng thử lại.');
     }
   };
 
@@ -220,10 +222,10 @@ const Medications = () => {
           med.id === medicationId ? { ...med, lastTaken: new Date().toISOString() } : med
         )
       );
-      alert('Đã ghi nhận uống thuốc!');
+      success('Đã ghi nhận uống thuốc!');
     } catch (error) {
       console.error('Failed to log intake:', error);
-      alert('Không thể ghi nhận. Vui lòng thử lại.');
+      showError('Không thể ghi nhận. Vui lòng thử lại.');
     }
   };
 

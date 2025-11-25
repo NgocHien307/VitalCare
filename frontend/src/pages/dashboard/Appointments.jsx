@@ -11,8 +11,10 @@ import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import HealthStatusBadge from '../../components/HealthStatusBadge';
 import { appointmentsAPI } from '../../utils/api';
+import { useToast } from '../../contexts/ToastContext';
 
 const Appointments = () => {
+  const { error: showError } = useToast();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -173,7 +175,7 @@ const Appointments = () => {
       handleCloseModal();
     } catch (error) {
       console.error('Failed to save appointment:', error);
-      alert('Không thể lưu lịch hẹn. Vui lòng thử lại.');
+      showError('Không thể lưu lịch hẹn. Vui lòng thử lại.');
     } finally {
       setSubmitLoading(false);
     }
@@ -187,7 +189,7 @@ const Appointments = () => {
       setAppointments((prev) => prev.filter((apt) => apt.id !== id));
     } catch (error) {
       console.error('Failed to delete appointment:', error);
-      alert('Không thể xóa lịch hẹn. Vui lòng thử lại.');
+      showError('Không thể xóa lịch hẹn. Vui lòng thử lại.');
     }
   };
 
@@ -201,7 +203,7 @@ const Appointments = () => {
       );
     } catch (error) {
       console.error('Failed to cancel appointment:', error);
-      alert('Không thể hủy lịch hẹn. Vui lòng thử lại.');
+      showError('Không thể hủy lịch hẹn. Vui lòng thử lại.');
     }
   };
 
