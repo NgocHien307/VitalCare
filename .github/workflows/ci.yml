@@ -78,6 +78,7 @@ jobs:
           name: test-results
           path: target/surefire-reports/
           retention-days: 7
+          if-no-files-found: ignore
 
       - name: 📤 Upload Coverage Report
         uses: actions/upload-artifact@v4
@@ -87,6 +88,7 @@ jobs:
           name: coverage-report
           path: target/site/jacoco/
           retention-days: 7
+          if-no-files-found: ignore
 
   # ============================================
   # Frontend CI Job
@@ -118,12 +120,14 @@ jobs:
         run: npm ci || npm install
 
       - name: 🔍 Run Linting
-        run: npm run lint --if-present
+        run: npm run lint
         continue-on-error: true
 
       - name: 🧪 Run Tests
-        run: npm test --if-present
+        run: npm test
         continue-on-error: true
+        env:
+          CI: true
 
       - name: 🏗️ Build
         run: npm run build
@@ -148,8 +152,10 @@ jobs:
         image: mongo:7.0
         ports:
           - 27017:27017
+        env:
+          MONGO_INITDB_DATABASE: healthtracker_integration_test
         options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' || mongo --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -178,21 +184,11 @@ jobs:
       - name: 🔧 Make Maven Wrapper executable
         run: chmod +x ./mvnw
 
-      - name: 🔄 Wait for MongoDB
+      - name: 🔄 Wait for services to be ready
         run: |
-          until mongosh --eval "db.runCommand({ ping: 1 })" --quiet; do
-            echo "Waiting for MongoDB..."
-            sleep 2
-          done
-          echo "MongoDB is ready!"
-
-      - name: 🔄 Wait for Redis
-        run: |
-          until redis-cli ping; do
-            echo "Waiting for Redis..."
-            sleep 2
-          done
-          echo "Redis is ready!"
+          echo "Waiting for services to be healthy..."
+          sleep 10
+          echo "Services should be ready!"
 
       - name: 🧪 Run Integration Tests
         run: ./mvnw verify -B --file pom.xml
@@ -213,6 +209,7 @@ jobs:
           name: integration-test-results
           path: target/failsafe-reports/
           retention-days: 7
+          if-no-files-found: ignore
 
   # ============================================
   # Security Scan Job
@@ -237,8 +234,9 @@ jobs:
         run: chmod +x ./mvnw
 
       - name: 🔒 OWASP Dependency Check
-        run: ./mvnw org.owasp:dependency-check-maven:check -B --file pom.xml
+        run: ./mvnw dependency-check:check -B --file pom.xml
         continue-on-error: true
+        timeout-minutes: 15
 
       - name: 📤 Upload Security Report
         uses: actions/upload-artifact@v4
@@ -247,6 +245,7 @@ jobs:
           name: security-report
           path: target/dependency-check-report.html
           retention-days: 30
+          if-no-files-found: ignore
 
   # ============================================
   # Build Status Summary

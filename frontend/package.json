@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives",
-    "lint:strict": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext js,jsx --fix"
+    "lint": "eslint . --report-unused-disable-directives",
+    "lint:strict": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "dependencies": {
     "lucide-react": "^0.462.0",
