@@ -8,6 +8,8 @@ import com.healthtracker.model.MetricType;
 import com.healthtracker.repository.HealthMetricRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,6 +24,7 @@ import java.util.List;
 public class HealthMetricService implements IHealthMetricService {
 
     private final HealthMetricRepository healthMetricRepository;
+    private final MessageSource messageSource;
 
     /**
      * Get all metrics for a user
@@ -53,11 +56,12 @@ public class HealthMetricService implements IHealthMetricService {
     @Override
     public HealthMetric getMetricById(String id, String userId) {
         HealthMetric metric = healthMetricRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("HealthMetric", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        getMessage("error.resource.notfound.healthmetric", id)));
 
         // Verify ownership
         if (!metric.getUserId().equals(userId)) {
-            throw new BadRequestException("You don't have permission to access this metric");
+            throw new BadRequestException(getMessage("error.permission.denied"));
         }
 
         return metric;
@@ -153,16 +157,16 @@ public class HealthMetricService implements IHealthMetricService {
 
         if (systolic >= 180 || diastolic >= 120) {
             metric.setStatus("CRITICAL");
-            metric.setAnalysisNote("Huyết áp rất cao - Cần gặp bác sĩ ngay");
+            metric.setAnalysisNote(getMessage("health.metric.bloodpressure.critical"));
         } else if (systolic >= 140 || diastolic >= 90) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Huyết áp cao - Nên kiểm tra với bác sĩ");
+            metric.setAnalysisNote(getMessage("health.metric.bloodpressure.high"));
         } else if (systolic < 90 || diastolic < 60) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Huyết áp thấp");
+            metric.setAnalysisNote(getMessage("health.metric.bloodpressure.low"));
         } else {
             metric.setStatus("NORMAL");
-            metric.setAnalysisNote("Huyết áp bình thường");
+            metric.setAnalysisNote(getMessage("health.metric.bloodpressure.normal"));
         }
     }
 
@@ -176,16 +180,16 @@ public class HealthMetricService implements IHealthMetricService {
 
         if (value >= 200) {
             metric.setStatus("CRITICAL");
-            metric.setAnalysisNote("Đường huyết rất cao - Cần gặp bác sĩ ngay");
+            metric.setAnalysisNote(getMessage("health.metric.bloodsugar.critical"));
         } else if (value >= 126) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Đường huyết cao - Nguy cơ tiểu đường");
+            metric.setAnalysisNote(getMessage("health.metric.bloodsugar.high"));
         } else if (value < 70) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Đường huyết thấp");
+            metric.setAnalysisNote(getMessage("health.metric.bloodsugar.low"));
         } else {
             metric.setStatus("NORMAL");
-            metric.setAnalysisNote("Đường huyết bình thường");
+            metric.setAnalysisNote(getMessage("health.metric.bloodsugar.normal"));
         }
     }
 
@@ -199,13 +203,13 @@ public class HealthMetricService implements IHealthMetricService {
 
         if (value > 120 || value < 40) {
             metric.setStatus("CRITICAL");
-            metric.setAnalysisNote("Nhịp tim bất thường - Cần gặp bác sĩ");
+            metric.setAnalysisNote(getMessage("health.metric.heartrate.critical"));
         } else if (value > 100 || value < 50) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Nhịp tim nằm ngoài phạm vi bình thường");
+            metric.setAnalysisNote(getMessage("health.metric.heartrate.warning"));
         } else {
             metric.setStatus("NORMAL");
-            metric.setAnalysisNote("Nhịp tim bình thường");
+            metric.setAnalysisNote(getMessage("health.metric.heartrate.normal"));
         }
     }
 
@@ -219,16 +223,30 @@ public class HealthMetricService implements IHealthMetricService {
 
         if (value >= 39.0) {
             metric.setStatus("CRITICAL");
-            metric.setAnalysisNote("Sốt cao - Cần gặp bác sĩ");
+            metric.setAnalysisNote(getMessage("health.metric.temperature.critical"));
         } else if (value >= 37.5) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Sốt nhẹ");
+            metric.setAnalysisNote(getMessage("health.metric.temperature.warning"));
         } else if (value < 35.0) {
             metric.setStatus("WARNING");
-            metric.setAnalysisNote("Nhiệt độ thấp");
+            metric.setAnalysisNote(getMessage("health.metric.temperature.low"));
         } else {
             metric.setStatus("NORMAL");
-            metric.setAnalysisNote("Nhiệt độ bình thường");
+            metric.setAnalysisNote(getMessage("health.metric.temperature.normal"));
         }
+    }
+
+    /**
+     * Helper method to get localized message
+     */
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    /**
+     * Helper method to get localized message with parameters
+     */
+    private String getMessage(String code, Object... args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 }

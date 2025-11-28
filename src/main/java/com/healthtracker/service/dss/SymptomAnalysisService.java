@@ -4,10 +4,11 @@ import com.healthtracker.dto.response.DiseaseMatchScore;
 import com.healthtracker.dto.response.SymptomAnalysisResponse;
 import com.healthtracker.model.*;
 import com.healthtracker.repository.HealthInsightRepository;
-import com.healthtracker.repository.SymptomDiseaseMappingRepository;
 import com.healthtracker.repository.SymptomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
     private final SymptomRepository symptomRepository;
     private final com.healthtracker.service.SymptomDiseaseMappingService mappingService;
     private final HealthInsightRepository insightRepository;
+    private final MessageSource messageSource;
 
     /**
      * Analyze user's active symptoms and predict possible conditions
@@ -222,20 +224,20 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
         }
 
         String title = urgencyScore > 70
-                ? "⚠️ Triệu chứng cần chú ý ngay"
+                ? getMessage("symptom.insight.title.critical")
                 : urgencyScore > 40
-                        ? "💡 Phân tích triệu chứng của bạn"
-                        : "ℹ️ Thông tin về triệu chứng";
+                        ? getMessage("symptom.insight.title.warning")
+                        : getMessage("symptom.insight.title.info");
 
         StringBuilder message = new StringBuilder();
-        message.append("Dựa trên các triệu chứng của bạn, các bệnh có thể là:\n\n");
+        message.append(getMessage("symptom.insight.message.intro"));
 
         for (int i = 0; i < Math.min(3, diseases.size()); i++) {
             DiseaseMatchScore disease = diseases.get(i);
-            message.append(String.format("%d. %s (%.0f%% khớp)\n",
+            message.append(getMessage("symptom.insight.message.disease",
                     i + 1,
                     disease.getDiseaseName(),
-                    disease.getMatchScore() * 100));
+                    String.format("%.0f", disease.getMatchScore() * 100)));
         }
 
         String advice = getActionableAdvice(urgencyScore, diseases);
@@ -268,22 +270,22 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
      */
     private String getActionableAdvice(double urgencyScore, List<DiseaseMatchScore> diseases) {
         if (urgencyScore > 70) {
-            return "🚨 GẶP BÁC SĨ NGAY:\n" +
-                    "- Triệu chứng của bạn cần được đánh giá y tế khẩn cấp\n" +
-                    "- Đặt lịch gặp bác sĩ TRONG 24-48 GIỜ\n" +
-                    "- Nếu triệu chứng trở nên nghiêm trọng hơn, đi cấp cứu ngay";
+            return getMessage("symptom.advice.critical.title") + "\n" +
+                    getMessage("symptom.advice.critical.line1") + "\n" +
+                    getMessage("symptom.advice.critical.line2") + "\n" +
+                    getMessage("symptom.advice.critical.line3");
         } else if (urgencyScore > 40) {
-            return "⚠️ KHUYẾN NGHỊ:\n" +
-                    "- Đặt lịch gặp bác sĩ trong 1-2 tuần\n" +
-                    "- Theo dõi triệu chứng hàng ngày\n" +
-                    "- Nghỉ ngơi đầy đủ và uống nhiều nước\n" +
-                    "- Nếu triệu chứng xấu đi, gặp bác sĩ sớm hơn";
+            return getMessage("symptom.advice.warning.title") + "\n" +
+                    getMessage("symptom.advice.warning.line1") + "\n" +
+                    getMessage("symptom.advice.warning.line2") + "\n" +
+                    getMessage("symptom.advice.warning.line3") + "\n" +
+                    getMessage("symptom.advice.warning.line4");
         } else {
-            return "💡 GỢI Ý:\n" +
-                    "- Theo dõi triệu chứng trong vài ngày\n" +
-                    "- Nghỉ ngơi và chăm sóc bản thân\n" +
-                    "- Nếu không cải thiện sau 3-5 ngày, gặp bác sĩ\n" +
-                    "- Ghi chú bất kỳ thay đổi nào";
+            return getMessage("symptom.advice.info.title") + "\n" +
+                    getMessage("symptom.advice.info.line1") + "\n" +
+                    getMessage("symptom.advice.info.line2") + "\n" +
+                    getMessage("symptom.advice.info.line3") + "\n" +
+                    getMessage("symptom.advice.info.line4");
         }
     }
 
@@ -296,9 +298,9 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
                 .urgencyScore(30.0)
                 .urgencyLevel("LOW")
                 .recommendations(List.of(
-                        "Không tìm thấy bệnh phù hợp trong cơ sở dữ liệu",
-                        "Nếu triệu chứng nghiêm trọng hoặc không cải thiện, hãy gặp bác sĩ"))
-                .analysisNote("Triệu chứng của bạn không khớp với các bệnh trong hệ thống")
+                        getMessage("symptom.nomatch.recommendation1"),
+                        getMessage("symptom.nomatch.recommendation2")))
+                .analysisNote(getMessage("symptom.nomatch.note"))
                 .build();
     }
 
@@ -322,13 +324,11 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
         }
 
         int symptomCount = rankedDiseases.isEmpty() ? 0 : (int) (rankedDiseases.get(0).getMatchScore() * 100);
-        String analysisNote = String.format(
-                "Phân tích %d triệu chứng với %d bệnh tiềm năng. " +
-                        "Độ khẩn cấp: %s (%.0f/100)",
+        String analysisNote = getMessage("symptom.analysis.note",
                 symptomCount,
                 rankedDiseases.size(),
                 urgencyLevel,
-                urgencyScore);
+                String.format("%.0f", urgencyScore));
 
         return SymptomAnalysisResponse.builder()
                 .possibleConditions(rankedDiseases)
@@ -337,5 +337,19 @@ public class SymptomAnalysisService implements ISymptomAnalysisService {
                 .recommendations(recommendations)
                 .analysisNote(analysisNote)
                 .build();
+    }
+
+    /**
+     * Helper method to get localized message without parameters
+     */
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    /**
+     * Helper method to get localized message with parameters
+     */
+    private String getMessage(String code, Object... args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 }

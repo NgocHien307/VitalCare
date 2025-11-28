@@ -15,15 +15,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -35,21 +36,31 @@ class SymptomAnalysisServiceTest {
     
     @Mock
     private SymptomRepository symptomRepository;
-    
+
     @Mock
     private SymptomDiseaseMappingService mappingService;
-    
+
     @Mock
     private HealthInsightRepository insightRepository;
-    
+
+    @Mock
+    private MessageSource messageSource;
+
     @InjectMocks
     private SymptomAnalysisService symptomAnalysisService;
-    
+
     private String userId;
-    
+
     @BeforeEach
     void setUp() {
         userId = "test@example.com";
+
+        // Mock MessageSource to return message codes as-is for testing
+        // Using lenient() to avoid unnecessary stubbing errors in tests that don't use MessageSource
+        lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(messageSource.getMessage(anyString(), isNull(), any(Locale.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
     
     @Test

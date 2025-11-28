@@ -1,5 +1,6 @@
 package com.healthtracker.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -15,11 +16,13 @@ import java.time.Duration;
 
 /**
  * Redis Cache Configuration for performance optimization
+ * Only enabled when spring.cache.type=redis
  */
 @Configuration
 @EnableCaching
+@ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
 public class CacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
@@ -31,7 +34,7 @@ public class CacheConfig {
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
                                 new GenericJackson2JsonRedisSerializer()));
-        
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .build();
