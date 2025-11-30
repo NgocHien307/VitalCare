@@ -18,6 +18,7 @@ export const useApi = (apiCall, dependencies = [], immediate = true) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(immediate);
   const [error, setError] = useState(null);
+  const [hasExecuted, setHasExecuted] = useState(false);
 
   const execute = useCallback(async () => {
     try {
@@ -25,9 +26,11 @@ export const useApi = (apiCall, dependencies = [], immediate = true) => {
       setError(null);
       const result = await apiCall();
       setData(result);
+      setHasExecuted(true);
       return result;
     } catch (err) {
       setError(err);
+      setHasExecuted(true);
       console.error('API Error:', err);
       throw err;
     } finally {
@@ -36,13 +39,17 @@ export const useApi = (apiCall, dependencies = [], immediate = true) => {
   }, dependencies);
 
   useEffect(() => {
-    if (immediate) {
+    // Only execute once on mount if immediate is true and hasn't executed yet
+    if (immediate && !hasExecuted) {
       execute();
     }
-  }, [execute, immediate]);
+  }, [execute, immediate, hasExecuted]);
 
   // Refetch function to manually trigger API call
-  const refetch = useCallback(() => execute(), [execute]);
+  const refetch = useCallback(() => {
+    setHasExecuted(false);
+    return execute();
+  }, [execute]);
 
   return {
     data,

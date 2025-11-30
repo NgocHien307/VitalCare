@@ -89,8 +89,8 @@ const apiRequest = async (endpoint, options = {}) => {
     const response = await fetch(url, config);
     return await handleResponse(response);
   } catch (error) {
-    // If 401 Unauthorized, clear token and redirect to login
-    if (error.status === 401) {
+    // If 401 Unauthorized or 403 Forbidden, clear token and redirect to login
+    if (error.status === 401 || error.status === 403) {
       removeAuthToken();
       window.location.href = '/login';
     }

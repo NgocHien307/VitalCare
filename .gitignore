@@ -4,10 +4,41 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### Environment Variables ###
+### Environment Variables & Secrets ###
 .env
 .env.local
 .env.*.local
+.env.docker
+*.env
+.env.production
+.env.development
+.env.test
+
+### Sensitive Configuration Files ###
+application-*.properties
+!application-test.properties
+**/application-local.properties
+**/application-dev.properties
+**/application-prod.properties
+
+# Note: application.properties should NOT be committed if it contains real credentials
+# Use environment variables or application-{profile}.properties for sensitive data
+# src/main/resources/application.properties
+
+### Database Files ###
+*.db
+*.sqlite
+*.sqlite3
+data/
+mongo-data/
+redis-data/
+
+# MongoDB backup files
+dump/
+*.bson
+
+# Docker volumes (if mounted locally)
+**/volumes/
 
 ### STS ###
 .apt_generated
@@ -36,3 +67,19 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs and Temp Files ###
+*.log
+logs/
+temp/
+tmp/
+*.tmp
+
+### Security & Credentials ###
+secrets/
+credentials/
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore

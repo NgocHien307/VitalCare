@@ -71,28 +71,35 @@ const Login = () => {
     setLoginError('');
 
     try {
-      // Mock API call - replace with actual authentication
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call actual backend API
+      const response = await authAPI.login(formData.email, formData.password);
 
-      // Mock authentication check
-      if (formData.email === 'demo@healthtracker.com' && formData.password === 'demo123') {
-        // Store authentication token (mock)
-        localStorage.setItem('authToken', 'mock-jwt-token');
-        localStorage.setItem('userId', 'user-123');
-        localStorage.setItem('userName', 'Nguyễn Văn A');
-
-        // Store remember me preference
-        if (formData.rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-        }
-
-        // Navigate to dashboard
-        navigate('/dashboard');
-      } else {
-        setLoginError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      // Token is automatically stored by authAPI.login
+      // Store additional user info
+      if (response.userId) {
+        localStorage.setItem('userId', response.userId);
       }
+      if (response.fullName) {
+        localStorage.setItem('userName', response.fullName);
+      }
+
+      // Store remember me preference
+      if (formData.rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+      }
+
+      // Show success message
+      info('Đăng nhập thành công!');
+
+      // Navigate to dashboard
+      navigate('/dashboard');
     } catch (error) {
-      setLoginError('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.');
+      console.error('Login error:', error);
+      if (error.status === 401 || error.status === 403) {
+        setLoginError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      } else {
+        setLoginError(error.message || 'Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.');
+      }
     } finally {
       setIsLoading(false);
     }
